@@ -65,6 +65,17 @@ public:
 
     bool OnUserUpdate(float fElapsedTime) override
     {
+
+        Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLACK);
+
+        // Draw Triangles
+        for (auto tri : meshCube.tris)
+        {
+
+        }
+
+
+
         return true;
     }
 };
