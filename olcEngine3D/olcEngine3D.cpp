@@ -180,7 +180,7 @@ public:
            // if (normal.z < 0)
             if (normal.x * (triTranslated.p[0].x - vCamera.x) + 
                 normal.y * (triTranslated.p[0].y - vCamera.y) + 
-                normal.z * (triTranslated.p[0].z - vCamera.z) < 0.0f)
+                normal.z * (triTranslated.p[0].z - vCamera.z) > 0.0f)
                 
             {
 
@@ -212,7 +212,6 @@ public:
         }
 
 
-
         return true;
     }
 };
@@ -222,7 +221,7 @@ public:
 int main()
 {
     olcEngine3D demo;
-    if (demo.ConstructConsole(135, 100, 8, 8))
+    if (demo.ConstructConsole(200, 120, 4, 4))
         demo.Start();
   
 
