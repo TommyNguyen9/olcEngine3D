@@ -55,6 +55,34 @@ private:
 
     }
 
+    CHAR_INFO GetColour(float lum)
+    {
+        short bg_col, fg_col;
+        wchar_t sym;
+        int pixel_bw = (int)(13.0f * lum);
+        switch (pixel_bw)
+        {
+        case 0: bg_col = BG_BLACK; fg_col = FG_BLACK; sym = PIXEL_SOLID; break;
+
+        case 1: bg_col = BG_BLACK; fg_col = FG_DARK_GREY; sym = PIXEL_QUARTER; break;
+        case 2: bg_col = BG_BLACK; fg_col = FG_DARK_GREY; sym = PIXEL_HALF; break;
+        case 3: bg_col = BG_BLACK; fg_col = FG_DARK_GREY; sym = PIXEL_THREEQUARTERS; break;
+        case 4: bg_col = BG_BLACK; fg_col = FG_DARK_GREY; sym = PIXEL_SOLID; break;
+
+        case 5: bg_col = BG_DARK_GREY; fg_col = FG_GREY; sym = PIXEL_QUARTER; break;
+        case 6: bg_col = BG_DARK_GREY; fg_col = FG_GREY; sym = PIXEL_HALF; break;
+        case 7: bg_col = BG_DARK_GREY; fg_col = FG_GREY; sym = PIXEL_THREEQUARTERS; break;
+        case 8: bg_col = BG_DARK_GREY; fg_col = FG_GREY; sym = PIXEL_SOLID; break;
+
+        case 9: bg_col = BG_GREY; fg_col = FG_WHITE; sym = PIXEL_QUARTER; break;
+        case 10: bg_col = BG_GREY; fg_col = FG_WHITE; sym = PIXEL_HALF; break;
+        case 11: bg_col = BG_GREY; fg_col = FG_WHITE; sym = PIXEL_THREEQUARTERS; break;
+        case 12: bg_col = BG_GREY; fg_col = FG_WHITE; sym = PIXEL_SOLID; break;
+        default:
+            bg_col = BG_BLACK; fg_col = FG_BLACK; sym = PIXEL_SOLID;
+        }
+    }
+
 
 
 public:
@@ -180,9 +208,18 @@ public:
            // if (normal.z < 0)
             if (normal.x * (triTranslated.p[0].x - vCamera.x) + 
                 normal.y * (triTranslated.p[0].y - vCamera.y) + 
-                normal.z * (triTranslated.p[0].z - vCamera.z) > 0.0f)
+                normal.z * (triTranslated.p[0].z - vCamera.z) < 0.0f)
                 
             {
+
+                // Illumination:
+                vec3d light_direction = { 0.0f, 0.0f, -1.0f };
+                float l = sqrtf(light_direction.x * light_direction.x + light_direction.y * light_direction.y + light_direction.z * light_direction.z);
+                light_direction.x /= 1; light_direction.y /= 1; light_direction.z /= 1;
+
+                float dp = normal.x * light_direction.x + normal.y * light_direction.y + normal.z * light_direction.z * light_direction.z);
+
+
 
                 // Project triangles from 3D -> 2D
                 MultiplyMatrixVector(triTranslated.p[0], triProjected.p[0], matProj);
@@ -201,8 +238,8 @@ public:
                 triProjected.p[2].x *= 0.5f * (float)ScreenWidth();
                 triProjected.p[2].y *= 0.5f * (float)ScreenHeight();
 
-
-                DrawTriangle(triProjected.p[0].x, triProjected.p[0].y,
+                // Rasterize Triangle
+                FillTriangle(triProjected.p[0].x, triProjected.p[0].y,
                     triProjected.p[1].x, triProjected.p[1].y,
                     triProjected.p[2].x, triProjected.p[2].y,
                     PIXEL_SOLID, FG_WHITE);
