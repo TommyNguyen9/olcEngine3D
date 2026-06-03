@@ -89,6 +89,7 @@ private:
     mat4x4 matProj;
 
     vec3d vCamera = { 0.0f, 0.0f, 0.0f };
+    vec3d vLookDir;
 
     float fTheta = 0.0f;
 
@@ -215,7 +216,11 @@ private:
         matrix.m[0][0] = m.m[0][0]; matrix.m[0][1] = m.m[1][0]; matrix.m[0][2] = m.m[2][0]; matrix.m[0][3] = 0.0f;
         matrix.m[1][0] = m.m[0][1]; matrix.m[1][1] = m.m[1][1]; matrix.m[1][2] = m.m[2][1]; matrix.m[1][3] = 0.0f;
         matrix.m[2][0] = m.m[0][2]; matrix.m[2][1] = m.m[1][2]; matrix.m[2][2] = m.m[2][2]; matrix.m[2][3] = 0.0f;
-
+        matrix.m[3][0] = -(m.m[3][0] * matrix.m[0][0] + m.m[3][1] * matrix.m[1][0] + m.m[3][2] * matrix.m[2][0]);
+        matrix.m[3][1] = -(m.m[3][0] * matrix.m[0][1] + m.m[3][1] * matrix.m[1][1] + m.m[3][2] * matrix.m[2][1]);
+        matrix.m[3][2] = -(m.m[3][0] * matrix.m[0][2] + m.m[3][1] * matrix.m[1][2] + m.m[3][2] * matrix.m[2][2]);
+        matrix.m[3][3] = 1.0f;
+        return matrix;
     }
 
 
@@ -318,6 +323,14 @@ public:
     bool OnUserUpdate(float fElapsedTime) override
     {
 
+        if (GetKey(VK_UP).bHeld)
+            vCamera.y += 8.0f * fElapsedTime;
+
+        if (GetKey(VK_DOWN).bHeld)
+            vCamera.y -= 8.0f * fElapsedTime;
+
+
+
         Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLACK);
 
         // Set up rotation matrices:
@@ -335,6 +348,14 @@ public:
         matWorld = Matrix_MultiplyMatrix(matRotZ, matRotX);
         matWorld = Matrix_MultiplyMatrix(matWorld, matTrans);
 
+        vLookDir = { 0, 0, 1 };
+        vec3d vUp = { 0, 1, 0 };
+        vec3d vTarget = Vector_Add(vCamera, vLookDir);
+
+        mat4x4 matCamera = Matrix_PointAt(vCamera, vTarget, vUp);
+
+        // View matrix from camera:
+        mat4x4 matView = Matrix_QuickInverse(matCamera);
 
         // Store triangles for later rastering:
         vector<triangle> vecTrianglesToRaster;
@@ -342,7 +363,7 @@ public:
         // Draw Triangles
         for (auto tri : meshCube.tris)
         {
-            triangle triProjected, triTransformed;
+            triangle triProjected, triTransformed, triViewed;
 
             triTransformed.p[0] = Matrix_MultiplyVector(matWorld, tri.p[0]);
             triTransformed.p[1] = Matrix_MultiplyVector(matWorld, tri.p[1]);
@@ -379,11 +400,15 @@ public:
                 triTransformed.col = c.Attributes;
                 triTransformed.sym = c.Char.UnicodeChar;
 
+                // Convert World Space to View Space:
+                triViewed.p[0] = Matrix_MultiplyVector(matView, triTransformed.p[0]);
+                triViewed.p[1] = Matrix_MultiplyVector(matView, triTransformed.p[1]);
+                triViewed.p[2] = Matrix_MultiplyVector(matView, triTransformed.p[2]);
 
                 // Project triangles from 3D -> 2D
-                triProjected.p[0] = Matrix_MultiplyVector(matProj, triTransformed.p[0]);
-                triProjected.p[1] = Matrix_MultiplyVector(matProj, triTransformed.p[1]);
-                triProjected.p[2] = Matrix_MultiplyVector(matProj, triTransformed.p[2]);
+                triProjected.p[0] = Matrix_MultiplyVector(matProj, triViewed.p[0]);
+                triProjected.p[1] = Matrix_MultiplyVector(matProj, triViewed.p[1]);
+                triProjected.p[2] = Matrix_MultiplyVector(matProj, triViewed.p[2]);
                 triProjected.col = triTransformed.col;
                 triProjected.sym = triTransformed.sym;
 
