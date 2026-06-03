@@ -146,7 +146,41 @@ private:
         return matrix;
     }
 
+    mat4x4 Matrix_MakeTranslation(float x, float y, float z)
+    {
+        mat4x4 matrix;
+        matrix.m[0][0] = 1.0f;
+        matrix.m[1][1] = 1.0f;
+        matrix.m[2][2] = 1.0f;
+        matrix.m[3][3] = 1.0f;
+        matrix.m[3][0] = x;
+        matrix.m[3][1] = y;
+        matrix.m[3][2] = z;
+        return matrix;
+    }
 
+    mat4x4 Matrix_MakeProjection(float fFovDegrees, float fAspectRatio, float fNear, float fFar)
+    {
+        float fFovRad = 1.0f / tanf(fFovDegrees * 0.5f / 180.0f * 3.14159f);
+        mat4x4 matrix;
+        matrix.m[0][0] = fAspectRatio * fFovRad;
+        matrix.m[1][1] = fFovRad;
+        matrix.m[2][2] = fFar / (fFar - fNear);
+        matrix.m[3][2] = (-fFar * fNear) / (fFar - fNear);
+        matrix.m[2][3] = 1.0f;
+        matrix.m[3][3] = 0.0f;
+        return matrix;
+
+    }
+
+    mat4x4 Matrix_MultiplyMatrix(mat4x4& m1, mat4x4& m2)
+    {
+        mat4x4 matrix;
+        for (int c = 0; c < 4; c++)
+            for (int r = 0; r < 4; r++)
+                matrix.m[r][c] = m1.m[r][0] * m2.m[0][c] + m1.m[r][1] * m2.m[1][c] + m1.m[r][2] * m2.m[2][c] + m1.m[r][3] * m2.m[3][c];
+        return matrix;
+    }
 
 
     vec3d Vector_Add(vec3d &v1, vec3d &v2)
@@ -234,51 +268,14 @@ public:
     bool OnUserCreate() override
     {
 
-        //meshCube.tris = {
-
-            //    // SOUTH
-            //    {0.0f, 0.0f, 0.0f,    0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 0.0f },
-            //    {0.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 0.0f, 0.0f },
-
-            //    // EAST
-            //    {1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f },
-            //    {1.0f, 0.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 0.0f, 1.0f },
-
-            //    // NORTH
-            //    {1.0f, 0.0f, 1.0f,    1.0f, 1.0f, 1.0f,    0.0f, 1.0f, 1.0f },
-            //    {1.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 0.0f, 1.0f },
-
-            //    // WEST
-            //    {0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 1.0f,    0.0f, 1.0f, 0.0f },
-            //    {0.0f, 0.0f, 1.0f,    0.0f, 1.0f, 0.0f,    0.0f, 0.0f, 0.0f },
-
-            //    // TOP
-            //    {0.0f, 1.0f, 0.0f,    0.0f, 1.0f, 1.0f,    1.0f, 1.0f, 1.0f },
-            //    {0.0f, 1.0f, 0.0f,    1.0f, 1.0f, 1.0f,    1.0f, 1.0f, 0.0f },
-
-            //    // BOTTOM
-            //    {1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f },
-            //    {1.0f, 0.0f, 1.0f,    0.0f, 0.0f, 0.0f,    1.0f, 0.0f, 0.0f },
-            //};
+        
 
             meshCube.LoadFromObjectFile("VideoShip.obj");
 
-        // Projection Matrix
-        float fNear = 0.1f;
-        float fFar = 1000.0f;
-        float fFov = 90.0f;
-        float fAspectRatio = (float)ScreenHeight() / (float)ScreenWidth();
-        float fFovRad = 1.0f / tanf(fFov * 0.5f / 180.0f * 3.14159f);
+            // Projection Matrix
+            matProj = Matrix_MakeProjection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
 
-        matProj.m[0][0] = fAspectRatio * fFovRad;
-        matProj.m[1][1] = fFovRad;
-        matProj.m[2][2] = fFar / (fFar - fNear);
-        matProj.m[3][2] = (-fFar * fNear) / (fFar - fNear);
-        matProj.m[2][3] = 1.0f;
-        matProj.m[3][3] = 0.0f;
-
-
-        return true;
+            return true;
     }
 
     bool OnUserUpdate(float fElapsedTime) override
