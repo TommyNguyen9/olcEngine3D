@@ -6,6 +6,7 @@
 #include <iostream>
 #include <filesystem>
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -215,6 +216,7 @@ public:
         matRotX.m[2][2] = cosf(fTheta * 0.5f);
         matRotX.m[3][3] = 1;
 
+        vector<triangle> vecTrianglesToRaster;
 
         // Draw Triangles
         for (auto tri : meshCube.tris)
@@ -232,11 +234,10 @@ public:
             MultiplyMatrixVector(triRotatedZ.p[2], triRotatedZX.p[2], matRotX);
 
             // Offset into screen
-
             triTranslated = triRotatedZX;
-            triTranslated.p[0].z = triRotatedZX.p[0].z + 3.0f;
-            triTranslated.p[1].z = triRotatedZX.p[1].z + 3.0f;
-            triTranslated.p[2].z = triRotatedZX.p[2].z + 3.0f;
+            triTranslated.p[0].z = triRotatedZX.p[0].z + 8.0f;
+            triTranslated.p[1].z = triRotatedZX.p[1].z + 8.0f;
+            triTranslated.p[2].z = triRotatedZX.p[2].z + 8.0f;
 
             vec3d normal, line1, line2;
             line1.x = triTranslated.p[1].x - triTranslated.p[0].x;
@@ -300,19 +301,30 @@ public:
                 triProjected.p[2].x *= 0.5f * (float)ScreenWidth();
                 triProjected.p[2].y *= 0.5f * (float)ScreenHeight();
 
-                // Rasterize Triangle
-                FillTriangle(triProjected.p[0].x, triProjected.p[0].y,
-                    triProjected.p[1].x, triProjected.p[1].y,
-                    triProjected.p[2].x, triProjected.p[2].y,
-                    triProjected.sym, triProjected.col);
+                // Store triangles for sorting:
+                vecTrianglesToRaster.push_back(triProjected);
 
-                DrawTriangle(triProjected.p[0].x, triProjected.p[0].y,
-                    triProjected.p[1].x, triProjected.p[1].y,
-                    triProjected.p[2].x, triProjected.p[2].y,
-                    PIXEL_SOLID, FG_BLACK);
 
             }
 
+        }
+
+        // Sort triangles back to front:
+        sort(vecTrianglesToRaster.begin(), vecTrianglesToRaster.end(), [](triangle& t1, triangle& t2)
+            {
+                float z1 = (t1.p[0].z + t1.p[1].z + t1.p[2].z) / 3.0f;
+                float z2 = (t2.p[0].z + t2.p[1].z + t2.p[2].z) / 3.0f;
+                return z1 > z2;
+
+            });
+
+        for (auto& triProjected : vecTrianglesToRaster)
+        {
+            // Rasterize triangle
+            FillTriangle(triProjected.p[0].x, triProjected.p[0].y,
+                triProjected.p[1].x, triProjected.p[1].y,
+                triProjected.p[2].x, triProjected.p[2].y,
+                triProjected.sym, triProjected.col);
         }
 
 
