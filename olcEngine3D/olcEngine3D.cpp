@@ -12,7 +12,10 @@ using namespace std;
 
 struct vec3d
 {
-    float x, y, z, w;
+    float x = 0;
+    float y = 0;
+    float z = 0;
+    float w = 1;
 };
 
 struct triangle
@@ -185,7 +188,7 @@ private:
 
     vec3d Vector_Add(vec3d &v1, vec3d &v2)
     {
-        return { v1.x + v2.x + v1.y + v2.y, v1.z + v2.z };
+        return { v1.x + v2.x, v1.y + v2.y, v1.z + v2.z };
     }
 
     vec3d Vector_Sub(vec3d& v1, vec3d& v2)
@@ -268,9 +271,9 @@ public:
     bool OnUserCreate() override
     {
 
-        
-
             meshCube.LoadFromObjectFile("VideoShip.obj");
+
+   
 
             // Projection Matrix
             matProj = Matrix_MakeProjection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
@@ -283,105 +286,84 @@ public:
 
         Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLACK);
 
-
+        // Set up rotation matrices:
         mat4x4 matRotZ, matRotX;
         fTheta += 1.0f * fElapsedTime;
 
-        // Rotation Z:
+        matRotZ = Matrix_MakeRotationZ(fTheta);
+        matRotX = Matrix_MakeRotationX(fTheta);
 
-        matRotZ.m[0][0] = cosf(fTheta);
-        matRotZ.m[0][1] = sinf(fTheta);
-        matRotZ.m[1][0] = -sinf(fTheta);
-        matRotZ.m[1][1] = cosf(fTheta);
-        matRotZ.m[2][2] = 1;
-        matRotZ.m[3][3] = 1;
+        mat4x4 matTrans;
+        matTrans = Matrix_MakeTranslation(0.0f, 0.0f, 16.0f);
 
-        // Rotation X:
+        mat4x4 matWorld;
+        matWorld = Matrix_MakeIdentity();
+        matWorld = Matrix_MultiplyMatrix(matRotZ, matRotX);
+        matWorld = Matrix_MultiplyMatrix(matWorld, matTrans);
 
-        matRotX.m[0][0] = 1;
-        matRotX.m[1][1] = cosf(fTheta * 0.5f);
-        matRotX.m[1][2] = sinf(fTheta * 0.5f);
-        matRotX.m[2][1] = -sinf(fTheta * 0.5f);
-        matRotX.m[2][2] = cosf(fTheta * 0.5f);
-        matRotX.m[3][3] = 1;
 
+        // Store triangles for later rastering:
         vector<triangle> vecTrianglesToRaster;
 
         // Draw Triangles
         for (auto tri : meshCube.tris)
         {
-            triangle triProjected, triTranslated, triRotatedZ, triRotatedZX;
+            triangle triProjected, triTransformed;
 
-            MultiplyMatrixVector(tri.p[0], triRotatedZ.p[0], matRotZ);
-            MultiplyMatrixVector(tri.p[1], triRotatedZ.p[1], matRotZ);
-            MultiplyMatrixVector(tri.p[2], triRotatedZ.p[2], matRotZ);
+            triTransformed.p[0] = Matrix_MultiplyVector(matWorld, tri.p[0]);
+            triTransformed.p[1] = Matrix_MultiplyVector(matWorld, tri.p[1]);
+            triTransformed.p[2] = Matrix_MultiplyVector(matWorld, tri.p[2]);
 
-            // Rotate in X Axis
-
-            MultiplyMatrixVector(triRotatedZ.p[0], triRotatedZX.p[0], matRotX);
-            MultiplyMatrixVector(triRotatedZ.p[1], triRotatedZX.p[1], matRotX);
-            MultiplyMatrixVector(triRotatedZ.p[2], triRotatedZX.p[2], matRotX);
-
-            // Offset into screen
-            triTranslated = triRotatedZX;
-            triTranslated.p[0].z = triRotatedZX.p[0].z + 8.0f;
-            triTranslated.p[1].z = triRotatedZX.p[1].z + 8.0f;
-            triTranslated.p[2].z = triRotatedZX.p[2].z + 8.0f;
-
+            // Calculate triangle normal:
             vec3d normal, line1, line2;
-            line1.x = triTranslated.p[1].x - triTranslated.p[0].x;
-            line1.y = triTranslated.p[1].y - triTranslated.p[0].y;
-            line1.z = triTranslated.p[1].z - triTranslated.p[0].z;
 
-            line2.x = triTranslated.p[2].x - triTranslated.p[0].x;
-            line2.y = triTranslated.p[2].y - triTranslated.p[0].y;
-            line2.z = triTranslated.p[2].z - triTranslated.p[0].z;
+            // Get lines either side of triangle
+            line1 = Vector_Sub(triTransformed.p[1], triTransformed.p[0]);
+            line2 = Vector_Sub(triTransformed.p[2], triTransformed.p[0]);
 
-            normal.x = line1.y * line2.z - line1.z * line2.y;
-            normal.y = line1.z * line2.x - line1.x * line2.z;
-            normal.z = line1.x * line2.y - line1.y * line2.z;
+            // Cross product of lines to get normal to triangle surface
+            normal = Vector_CrossProduct(line1, line2);
+          
+            normal = Vector_Normalise(normal);
 
-            // Normalizing the normal
+            // Get ray from triangle to camera:
+            vec3d vCameraRay = Vector_Sub(triTransformed.p[0], vCamera);
 
-            float l = sqrtf(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
-            normal.x /= 1; 
-            normal.y /= 1; 
-            normal.z /= 1;
-
-
-           // if (normal.z < 0)
-            if (normal.x * (triTranslated.p[0].x - vCamera.x) + 
-                normal.y * (triTranslated.p[0].y - vCamera.y) + 
-                normal.z * (triTranslated.p[0].z - vCamera.z) < 0.0f)
-                
+            // If ray is alligned with normal, triangle is visible:
+            if (Vector_DotProduct(normal, vCameraRay) < 0.0f)
             {
-
                 // Illumination:
                 vec3d light_direction = { 0.0f, 0.0f, -1.0f };
-                float l = sqrtf(light_direction.x * light_direction.x + light_direction.y * light_direction.y + light_direction.z * light_direction.z);
                 light_direction.x /= 1; light_direction.y /= 1; light_direction.z /= 1;
 
-                float dp = normal.x * light_direction.x + normal.y * light_direction.y + normal.z * light_direction.z;
-
+                // How alligned are the light direction & triangle surface normal?
+                float dp = max(0.1f, Vector_DotProduct(light_direction, normal));
+                
 
                 // Console specific:
                 CHAR_INFO c = GetColour(dp);
-                triTranslated.col = c.Attributes;
-                triTranslated.sym = c.Char.UnicodeChar;
-
+                triTransformed.col = c.Attributes;
+                triTransformed.sym = c.Char.UnicodeChar;
 
 
                 // Project triangles from 3D -> 2D
-                MultiplyMatrixVector(triTranslated.p[0], triProjected.p[0], matProj);
-                MultiplyMatrixVector(triTranslated.p[1], triProjected.p[1], matProj);
-                MultiplyMatrixVector(triTranslated.p[2], triProjected.p[2], matProj);
-                triProjected.col = triTranslated.col;
-                triProjected.sym = triTranslated.sym;
+                triProjected.p[0] = Matrix_MultiplyVector(matProj, triTransformed.p[0]);
+                triProjected.p[1] = Matrix_MultiplyVector(matProj, triTransformed.p[1]);
+                triProjected.p[2] = Matrix_MultiplyVector(matProj, triTransformed.p[2]);
+                triProjected.col = triTransformed.col;
+                triProjected.sym = triTransformed.sym;
+
+                // Manually normalizing the coordinates:
+                triProjected.p[0] = Vector_Div(triProjected.p[0], triProjected.p[0].w);
+                triProjected.p[1] = Vector_Div(triProjected.p[1], triProjected.p[1].w);
+                triProjected.p[2] = Vector_Div(triProjected.p[2], triProjected.p[2].w);
+
 
                 // Scale into view
-                triProjected.p[0].x += 1.0f; triProjected.p[0].y += 1.0f;
-                triProjected.p[1].x += 1.0f; triProjected.p[1].y += 1.0f;
-                triProjected.p[2].x += 1.0f; triProjected.p[2].y += 1.0f;
+                vec3d vOffsetView = { 1, 1, 0 };
+                triProjected.p[0] = Vector_Add(triProjected.p[0], vOffsetView);
+                triProjected.p[1] = Vector_Add(triProjected.p[1], vOffsetView);
+                triProjected.p[2] = Vector_Add(triProjected.p[2], vOffsetView);
 
                 triProjected.p[0].x *= 0.5f * (float)ScreenWidth();
                 triProjected.p[0].y *= 0.5f * (float)ScreenHeight();
@@ -395,8 +377,10 @@ public:
 
 
             }
+            
 
         }
+
 
         // Sort triangles back to front:
         sort(vecTrianglesToRaster.begin(), vecTrianglesToRaster.end(), [](triangle& t1, triangle& t2)
