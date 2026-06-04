@@ -91,6 +91,8 @@ private:
     vec3d vCamera = { 0.0f, 0.0f, 0.0f };
     vec3d vLookDir;
 
+    float fYaw;
+
     float fTheta = 0.0f;
 
     vec3d Matrix_MultiplyVector(mat4x4 &m, vec3d &i)
@@ -242,7 +244,7 @@ private:
 
     vec3d Vector_Div(vec3d& v1, float k)
     {
-        return { v1.x / k, v1.y / k, v1.z };
+        return { v1.x / k, v1.y / k, v1.z / k };
     }
 
     float Vector_DotProduct(vec3d& v1, vec3d& v2)
@@ -330,10 +332,25 @@ public:
             vCamera.y -= 8.0f * fElapsedTime;
 
         if (GetKey(VK_LEFT).bHeld)
-            vCamera.x -= 8.0f * fElapsedTime;
+            vCamera.x += 8.0f * fElapsedTime;
 
         if (GetKey(VK_RIGHT).bHeld)
-            vCamera.x += 8.0f * fElapsedTime;
+            vCamera.x -= 8.0f * fElapsedTime;
+
+        vec3d vForward = Vector_Mul(vLookDir, 8.0f * fElapsedTime);
+
+        if (GetKey(L'W').bHeld)
+            vCamera = Vector_Add(vCamera, vForward);
+
+        if (GetKey(L'S').bHeld)
+            vCamera = Vector_Sub(vCamera, vForward);
+
+        if (GetKey(L'A').bHeld)
+            fYaw -= 2.0f * fElapsedTime;
+
+        if (GetKey(L'D').bHeld)
+            fYaw += 2.0f * fElapsedTime;
+
 
 
 
@@ -347,16 +364,19 @@ public:
         matRotX = Matrix_MakeRotationX(fTheta);
 
         mat4x4 matTrans;
-        matTrans = Matrix_MakeTranslation(0.0f, 0.0f, 16.0f);
+        matTrans = Matrix_MakeTranslation(0.0f, 0.0f, 12.0f);
 
         mat4x4 matWorld;
         matWorld = Matrix_MakeIdentity();
         matWorld = Matrix_MultiplyMatrix(matRotZ, matRotX);
         matWorld = Matrix_MultiplyMatrix(matWorld, matTrans);
 
-        vLookDir = { 0, 0, 1 };
         vec3d vUp = { 0, 1, 0 };
-        vec3d vTarget = Vector_Add(vCamera, vLookDir);
+        vec3d vTarget = { 0, 0, 1 };
+        mat4x4 matCameraRot = Matrix_MakeRotationY(fYaw);
+        vLookDir = Matrix_MultiplyVector(matCameraRot, vTarget);
+        vTarget = Vector_Add(vCamera, vLookDir);
+
 
         mat4x4 matCamera = Matrix_PointAt(vCamera, vTarget, vUp);
 
@@ -476,7 +496,7 @@ int main()
 {
    
     olcEngine3D demo;
-    if (demo.ConstructConsole(240, 180, 4, 4))
+    if (demo.ConstructConsole(220, 160, 4, 4))
         demo.Start();
   
 
