@@ -329,6 +329,12 @@ public:
         if (GetKey(VK_DOWN).bHeld)
             vCamera.y -= 8.0f * fElapsedTime;
 
+        if (GetKey(VK_LEFT).bHeld)
+            vCamera.x -= 8.0f * fElapsedTime;
+
+        if (GetKey(VK_RIGHT).bHeld)
+            vCamera.x += 8.0f * fElapsedTime;
+
 
 
         Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLACK);
