@@ -91,7 +91,7 @@ private:
     vec3d vCamera = { 0.0f, 0.0f, 0.0f };
     vec3d vLookDir;
 
-    float fYaw;
+    float fYaw = 0.0f;
 
     float fTheta = 0.0f;
 
@@ -419,11 +419,11 @@ public:
 
             meshCube.LoadFromObjectFile("VideoShip.obj");
 
-   
-
+  
             // Projection Matrix
             matProj = Matrix_MakeProjection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
 
+         
             return true;
     }
 
