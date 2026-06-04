@@ -350,10 +350,33 @@ private:
             return 1;
         }
 
+        if (nInsidePointCount == 2 && nOutsidePointCount == 1)
+        {
+            // Triangle needs to be clipped.
+            // Clipped triangle becomes a "quad"
+
+            out_tri1.col = in_tri.col;
+            out_tri1.sym = in_tri.sym;
+
+            out_tri2.col = in_tri.col;
+            out_tri2.sym = in_tri.sym;
+
+            // First triangle has two inside points & a new point determined by location
+            // where 1 side of the triangle intersects with the plane
+            out_tri1.p[0] = *inside_points[0];
+            out_tri1.p[1] = *inside_points[1];
+            out_tri1.p[2] = Vector_IntersectPlane(plane_p, plane_n, *inside_points[0], *outside_points[0]);
+
+            out_tri2.p[0] = *inside_points[1];
+            out_tri2.p[1] = out_tri1.p[2];
+            out_tri2.p[2] = Vector_IntersectPlane(plane_p, plane_n, *inside_points[1], *outside_points[0]);
+
+            return 2;
+        }
+
     }
 
    
-
 
     CHAR_INFO GetColour(float lum)
     {
