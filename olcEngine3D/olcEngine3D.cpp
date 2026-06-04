@@ -286,8 +286,73 @@ private:
 
     int Triangle_ClipAgainstPlane(vec3d plane_p, vec3d plane_n, triangle& in_tri, triangle& out_tri1, triangle& out_tri2)
     {
+        // Plane normal needs to be normal
+        plane_n = Vector_Normalise(plane_n);
+
+        // Return signed shortest distance from point to plane. 
+        auto dist = [&](vec3d& p)
+        {
+             vec3d n = Vector_Normalise(p);
+             return (plane_n.x * p.x + plane_n.y * p.y + plane_n.z * p.z - Vector_DotProduct(plane_n, plane_p));
+        };
+
+        // 2 temp storage arrays to classify points either side of plane
+        // If distance sign is positive, point lies on inside of plane
+        vec3d* inside_points[3]; int nInsidePointCount = 0;
+        vec3d* outside_points[3]; int nOutsidePointCount = 0;
+
+        // Get signed distance of each point in triangle to plane:
+        float d0 = dist(in_tri.p[0]);
+        float d1 = dist(in_tri.p[1]);
+        float d2 = dist(in_tri.p[2]);
+
+        if (d0 >= 0) { inside_points[nInsidePointCount++] = &in_tri.p[0]; }
+        else { outside_points[nOutsidePointCount++] = &in_tri.p[0]; }
+        if (d1 >= 0) { inside_points[nInsidePointCount++] = &in_tri.p[1]; }
+        else { outside_points[nOutsidePointCount++] = &in_tri.p[1]; }
+        if (d2 >= 0) { inside_points[nInsidePointCount++] = &in_tri.p[2]; }
+        else { outside_points[nOutsidePointCount++] = &in_tri.p[2]; }
+
+
+        // Classify triangle points. Break input triangle into small output triangles if needed.
+
+        if (nInsidePointCount == 0)
+        {
+            return 0; // No returned triangles are valid
+        }
+
+        if (nInsidePointCount == 3)
+        {
+            // All points lie on inside of plane. Do nothing.
+            // Allow triangle to pass through
+            out_tri1 = in_tri;
+
+            return 1;
+        }
+
+        if (nInsidePointCount == 1 && nOutsidePointCount == 2)
+        {
+            // Triangle should be clipped.
+
+            // Copy appearance info to new triangle:
+            out_tri1.col = in_tri.col;
+            out_tri1.sym = in_tri.sym;
+
+            // Inside point is valid so keep it
+            out_tri1.p[0] = *inside_points[0];
+
+            // 2 new points are at locations where orginal sides of triangle intersect with plane
+            out_tri1.p[1] = Vector_IntersectPlane(plane_p, plane_n, *inside_points[0], *outside_points[0]);
+            out_tri1.p[2] = Vector_IntersectPlane(plane_p, plane_n, *inside_points[0], *outside_points[1]);
+
+            // Return newly formed triangle
+
+            return 1;
+        }
 
     }
+
+   
 
 
     CHAR_INFO GetColour(float lum)
