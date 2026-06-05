@@ -615,7 +615,11 @@ public:
                     case 2: nTrisToAdd = Triangle_ClipAgainstPlane({ 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, test, clipped[0], clipped[1]); break;
                     case 3: nTrisToAdd = Triangle_ClipAgainstPlane({ (float)ScreenWidth() - 1, 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f }, test, clipped[0], clipped[1]); break;
                     }
+
+                    for (int w = 0; w < nTrisToAdd; w++)
+                        listTriangles.push_back(clipped[w]);
                 }
+                nNewTriangles = listTriangles.size();
             }
 
         }
