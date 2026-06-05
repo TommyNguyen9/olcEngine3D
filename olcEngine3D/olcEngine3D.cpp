@@ -335,7 +335,7 @@ private:
             // Triangle should be clipped.
 
             // Copy appearance info to new triangle:
-            out_tri1.col = in_tri.col;
+            out_tri1.col = FG_BLUE;//in_tri.col;
             out_tri1.sym = in_tri.sym;
 
             // Inside point is valid so keep it
@@ -355,10 +355,10 @@ private:
             // Triangle needs to be clipped.
             // Clipped triangle becomes a "quad"
 
-            out_tri1.col = in_tri.col;
+            out_tri1.col = FG_GREEN; //in_tri.col;
             out_tri1.sym = in_tri.sym;
 
-            out_tri2.col = in_tri.col;
+            out_tri2.col = FG_RED; //in_tri.col;
             out_tri2.sym = in_tri.sym;
 
             // First triangle has two inside points & a new point determined by location
@@ -591,18 +591,33 @@ public:
 
             });
 
-        for (auto& triProjected : vecTrianglesToRaster)
+        for (auto& triToRaster : vecTrianglesToRaster)
         {
-            // Rasterize triangle
-            FillTriangle(triProjected.p[0].x, triProjected.p[0].y,
-                triProjected.p[1].x, triProjected.p[1].y,
-                triProjected.p[2].x, triProjected.p[2].y,
-                triProjected.sym, triProjected.col);
+           // Clip triangles against all 4 screen edges
+            triangle clipped[2];
+            list<triangle> listTriangles;
+            listTriangles.push_back(triToRaster);
+            int nNewTriangles = 1;
 
-            DrawTriangle(triProjected.p[0].x, triProjected.p[0].y,
-                triProjected.p[1].x, triProjected.p[1].y,
-                triProjected.p[2].x, triProjected.p[2].y,
-                PIXEL_SOLID, FG_BLACK);
+            for (int p = 0; p < 4; p++)
+            {
+                int nTrisToAdd = 0;
+                while (nNewTriangles > 0)
+                {
+                    triangle test = listTriangles.front();
+                    listTriangles.pop_front();
+                    nNewTriangles--;
+
+                    switch (p)
+                    {
+                    case 0: nTrisToAdd = Triangle_ClipAgainstPlane({ 0.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, test, clipped[0], clipped[1]); break;
+                    case 1: nTrisToAdd = Triangle_ClipAgainstPlane({ 0.0f, (float)ScreenHeight() - 1, 0.0f }, { 0.0f, -1.0f, 0.0f }, test, clipped[0], clipped[1]); break;
+                    case 2: nTrisToAdd = Triangle_ClipAgainstPlane({ 0.0f, 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f }, test, clipped[0], clipped[1]); break;
+                    case 3: nTrisToAdd = Triangle_ClipAgainstPlane({ (float)ScreenWidth() - 1, 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f }, test, clipped[0], clipped[1]); break;
+                    }
+                }
+            }
+
         }
 
 
