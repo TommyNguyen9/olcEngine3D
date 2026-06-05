@@ -277,7 +277,7 @@ private:
         return v;
     }
 
-    vec3d Vector_IntersectPlane(vec3d& plane_p, vec3d& plane_n, vec3d& lineStart, vec3d& lineEnd)
+    vec3d Vector_IntersectPlane(vec3d& plane_p, vec3d& plane_n, vec3d& lineStart, vec3d& lineEnd, float &t)
     {
         plane_n = Vector_Normalise(plane_n);
         float plane_d = -Vector_DotProduct(plane_n, plane_p);
@@ -305,14 +305,20 @@ private:
         // If distance sign is positive, point lies on inside of plane
         vec3d* inside_points[3]; int nInsidePointCount = 0;
         vec3d* outside_points[3]; int nOutsidePointCount = 0;
+        vec2d* inside_tex[3]; int nInsideTexCount = 0;
+        vec2d* outside_tex[3]; int nOutsideTexCount = 0;
+
+
 
         // Get signed distance of each point in triangle to plane:
         float d0 = dist(in_tri.p[0]);
         float d1 = dist(in_tri.p[1]);
         float d2 = dist(in_tri.p[2]);
 
-        if (d0 >= 0) { inside_points[nInsidePointCount++] = &in_tri.p[0]; }
-        else { outside_points[nOutsidePointCount++] = &in_tri.p[0]; }
+        if (d0 >= 0) { inside_points[nInsidePointCount++] = &in_tri.p[0]; inside_tex[nInsideTexCount++] = &in_tri.t[0];
+        }
+        else { outside_points[nOutsidePointCount++] = &in_tri.p[0]; outside_tex[nOutsideTexCount++] = &in_tri.t[0]
+        }
         if (d1 >= 0) { inside_points[nInsidePointCount++] = &in_tri.p[1]; }
         else { outside_points[nOutsidePointCount++] = &in_tri.p[1]; }
         if (d2 >= 0) { inside_points[nInsidePointCount++] = &in_tri.p[2]; }
@@ -564,6 +570,9 @@ public:
                 triViewed.p[0] = Matrix_MultiplyVector(matView, triTransformed.p[0]);
                 triViewed.p[1] = Matrix_MultiplyVector(matView, triTransformed.p[1]);
                 triViewed.p[2] = Matrix_MultiplyVector(matView, triTransformed.p[2]);
+                triViewed.t[0] = triTransformed.t[0];
+                triViewed.t[1] = triTransformed.t[1];
+                triViewed.t[2] = triTransformed.t[2];
 
                 // Clip Viewed Triangle against near plane
                 int nClippedTriangles = 0;
