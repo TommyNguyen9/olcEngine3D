@@ -335,7 +335,7 @@ private:
             // Triangle should be clipped.
 
             // Copy appearance info to new triangle:
-            out_tri1.col = FG_BLUE;//in_tri.col;
+            out_tri1.col = in_tri.col;
             out_tri1.sym = in_tri.sym;
 
             // Inside point is valid so keep it
@@ -417,8 +417,8 @@ public:
     bool OnUserCreate() override
     {
 
-            meshCube.LoadFromObjectFile("VideoShip.obj");
-
+        meshCube.LoadFromObjectFile("VideoShip.obj");
+      
   
             // Projection Matrix
             matProj = Matrix_MakeProjection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
@@ -457,8 +457,6 @@ public:
             fYaw += 2.0f * fElapsedTime;
 
 
-
-
         Fill(0, 0, ScreenWidth(), ScreenHeight(), PIXEL_SOLID, FG_BLACK);
 
         // Set up rotation matrices:
@@ -469,7 +467,7 @@ public:
         matRotX = Matrix_MakeRotationX(fTheta);
 
         mat4x4 matTrans;
-        matTrans = Matrix_MakeTranslation(0.0f, 0.0f, 12.0f);
+        matTrans = Matrix_MakeTranslation(0.0f, 0.0f, 5.0f);
 
         mat4x4 matWorld;
         matWorld = Matrix_MakeIdentity();
@@ -642,7 +640,7 @@ int main()
 {
    
     olcEngine3D demo;
-    if (demo.ConstructConsole(220, 160, 4, 4))
+    if (demo.ConstructConsole(240, 160, 4, 4));
         demo.Start();
   
 
