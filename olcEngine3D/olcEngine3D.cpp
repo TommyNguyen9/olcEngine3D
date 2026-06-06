@@ -749,6 +749,8 @@ public:
         float dv2 = v3 - v1;
         float du2 = u3 - u1;
 
+        float tex_u, tex_v;
+
         float dax_step = 0, dbx_step = 0,
             du1_step = 0, dv1_step = 0,
             du2_step = 0, dv2_step = 0;
@@ -771,6 +773,30 @@ public:
 
                 float tex_su = u1 + (float)(i - y1) * du1_step;
                 float tex_sv = v1 + (float)(i - y1) * dv1_step;
+
+                float tex_eu = u1 + (float)(i - y1) * du2_step;
+                float tex_ev = v1 + (float)(i - y1) * dv2_step;
+
+                if (ax > bx)
+                {
+                    swap(ax, bx);
+                    swap(tex_su, tex_eu);
+                    swap(tex_sv, tex_ev);
+                }
+
+                tex_u = tex_su;
+                tex_v = tex_sv;
+
+                float tstep = 1.0f / ((float)(bx - ax));
+                float t = 0.0f;
+
+                for (int j = ax; j < bx; i++)
+                {
+                    tex_u = (1.0f - t) * tex_su + t * tex_eu;
+                    tex_v = (1.0f - t) * tex_sv + t * tex_ev;
+                    Draw(j, i, tex->SampleGlyph(tex_u, tex_v), tex->SampleColour(tex_u, tex_v));
+                    t += tstep;
+                }
             }
         }
     }
