@@ -459,17 +459,7 @@ private:
 public:
     bool OnUserCreate() override
     {
-        //if (sprTex1 == nullptr)
-        //{
-        //    ofstream debugFile("sprite_error.txt");
-        //    debugFile << "Sprite pointer null\n";
-        //    debugFile << "Current path: " << filesystem::current_path() << "\n";
-        //    debugFile.close();
-
-        //    return false;
-        //}
-
-
+       
         //meshCube.LoadFromObjectFile("VideoShip.obj");
         
             meshCube.tris = {
