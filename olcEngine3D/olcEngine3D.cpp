@@ -283,7 +283,7 @@ private:
         float plane_d = -Vector_DotProduct(plane_n, plane_p);
         float ad = Vector_DotProduct(lineStart, plane_n);
         float bd = Vector_DotProduct(lineEnd, plane_n);
-        float t = (-plane_d - ad) / (bd - ad);
+        t = (-plane_d - ad) / (bd - ad);
         vec3d lineStartToEnd = Vector_Sub(lineEnd, lineStart);
         vec3d lineToIntersect = Vector_Mul(lineStartToEnd, t);
         return Vector_Add(lineStart, lineToIntersect);
@@ -320,10 +320,20 @@ private:
         else {
             outside_points[nOutsidePointCount++] = &in_tri.p[0]; outside_tex[nOutsideTexCount++] = &in_tri.t[0];
         }
-        if (d1 >= 0) { inside_points[nInsidePointCount++] = &in_tri.p[1]; }
-        else { outside_points[nOutsidePointCount++] = &in_tri.p[1]; }
-        if (d2 >= 0) { inside_points[nInsidePointCount++] = &in_tri.p[2]; }
-        else { outside_points[nOutsidePointCount++] = &in_tri.p[2]; }
+        if (d1 >= 0) 
+        {
+            inside_points[nInsidePointCount++] = &in_tri.p[1]; inside_tex[nInsideTexCount++] = &in_tri.t[1];
+        }
+        else { 
+            outside_points[nOutsidePointCount++] = &in_tri.p[1]; outside_tex[nOutsideTexCount++] = &in_tri.t[1];
+        }
+
+        if (d2 >= 0) { 
+            inside_points[nInsidePointCount++] = &in_tri.p[2]; inside_tex[nInsideTexCount++] = &in_tri.t[2];
+        }
+        else { 
+            outside_points[nOutsidePointCount++] = &in_tri.p[2]; outside_tex[nOutsideTexCount++] == &in_tri.t[2];
+        }
 
 
         // Classify triangle points. Break input triangle into small output triangles if needed.
@@ -363,7 +373,6 @@ private:
             out_tri1.p[2] = Vector_IntersectPlane(plane_p, plane_n, *inside_points[0], *outside_points[1], t);
             out_tri1.t[2].u = t * (outside_tex[0]->u - inside_tex[0]->u) + inside_tex[0]->u;
             out_tri1.t[2].v = t * (outside_tex[0]->v - inside_tex[0]->v) + inside_tex[0]->v;
-
 
 
             out_tri1.p[2] = Vector_IntersectPlane(plane_p, plane_n, *inside_points[0], *outside_points[1], t);
@@ -686,8 +695,8 @@ public:
 
             for (auto& t : listTriangles)
             {
-                FillTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, t.sym, t.col);
-                DrawTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, PIXEL_SOLID, FG_BLACK);
+                //FillTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, t.sym, t.col);
+                DrawTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, PIXEL_SOLID, FG_WHITE);
             }
 
 
