@@ -317,7 +317,8 @@ private:
 
         if (d0 >= 0) { inside_points[nInsidePointCount++] = &in_tri.p[0]; inside_tex[nInsideTexCount++] = &in_tri.t[0];
         }
-        else { outside_points[nOutsidePointCount++] = &in_tri.p[0]; outside_tex[nOutsideTexCount++] = &in_tri.t[0]
+        else {
+            outside_points[nOutsidePointCount++] = &in_tri.p[0]; outside_tex[nOutsideTexCount++] = &in_tri.t[0];
         }
         if (d1 >= 0) { inside_points[nInsidePointCount++] = &in_tri.p[1]; }
         else { outside_points[nOutsidePointCount++] = &in_tri.p[1]; }
@@ -351,10 +352,21 @@ private:
 
             // Inside point is valid so keep it
             out_tri1.p[0] = *inside_points[0];
+            out_tri1.t[0] = *inside_tex[0];
 
             // 2 new points are at locations where orginal sides of triangle intersect with plane
-            out_tri1.p[1] = Vector_IntersectPlane(plane_p, plane_n, *inside_points[0], *outside_points[0]);
-            out_tri1.p[2] = Vector_IntersectPlane(plane_p, plane_n, *inside_points[0], *outside_points[1]);
+            float t; 
+            out_tri1.p[1] = Vector_IntersectPlane(plane_p, plane_n, *inside_points[0], *outside_points[0], t);
+            out_tri1.t[1].u = t * (outside_tex[0]->u - inside_tex[0]->u) + inside_tex[0]->u;
+            out_tri1.t[1].v = t * (outside_tex[0]->v - inside_tex[0]->v) + inside_tex[0]->v;
+
+            out_tri1.p[2] = Vector_IntersectPlane(plane_p, plane_n, *inside_points[0], *outside_points[1], t);
+            out_tri1.t[2].u = t * (outside_tex[0]->u - inside_tex[0]->u) + inside_tex[0]->u;
+            out_tri1.t[2].v = t * (outside_tex[0]->v - inside_tex[0]->v) + inside_tex[0]->v;
+
+
+
+            out_tri1.p[2] = Vector_IntersectPlane(plane_p, plane_n, *inside_points[0], *outside_points[1], t);
 
             // Return newly formed triangle
 
@@ -366,21 +378,30 @@ private:
             // Triangle needs to be clipped.
             // Clipped triangle becomes a "quad"
 
-            out_tri1.col = FG_GREEN; //in_tri.col;
+            out_tri1.col = in_tri.col;
             out_tri1.sym = in_tri.sym;
 
-            out_tri2.col = FG_RED; //in_tri.col;
+            out_tri2.col = in_tri.col;
             out_tri2.sym = in_tri.sym;
 
             // First triangle has two inside points & a new point determined by location
             // where 1 side of the triangle intersects with the plane
             out_tri1.p[0] = *inside_points[0];
             out_tri1.p[1] = *inside_points[1];
-            out_tri1.p[2] = Vector_IntersectPlane(plane_p, plane_n, *inside_points[0], *outside_points[0]);
+            out_tri1.t[0] = *inside_tex[0];
+            out_tri1.t[1] = *inside_tex[1];
+
+            float t;
+            out_tri1.p[2] = Vector_IntersectPlane(plane_p, plane_n, *inside_points[0], *outside_points[0], t);
 
             out_tri2.p[0] = *inside_points[1];
             out_tri2.p[1] = out_tri1.p[2];
-            out_tri2.p[2] = Vector_IntersectPlane(plane_p, plane_n, *inside_points[1], *outside_points[0]);
+            out_tri2.p[2] = Vector_IntersectPlane(plane_p, plane_n, *inside_points[1], *outside_points[0], t);
+
+            // Second triangle has one of the inside points. 
+            // A new point is determined by intersection of other side of triangle & the plane.
+
+    
 
             return 2;
         }
@@ -589,6 +610,9 @@ public:
                     triProjected.p[2] = Matrix_MultiplyVector(matProj, clipped[n].p[2]);
                     triProjected.col = clipped[n].col;
                     triProjected.sym = clipped[n].sym;
+                    triProjected.t[0] = clipped[n].t[0];
+                    triProjected.t[1] = clipped[n].t[1];
+                    triProjected.t[2] = clipped[n].t[2];
 
                     // Manually normalizing the coordinates:
                     triProjected.p[0] = Vector_Div(triProjected.p[0], triProjected.p[0].w);
