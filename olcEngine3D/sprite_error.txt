@@ -1,0 +1,2 @@
+Sprite pointer null
+Current path: "C:\\Users\\Smoke Nandos\\Desktop\\Computer Science Uni\\C++\\3D Graphics Engine\\olcEngine3D\\olcEngine3D"

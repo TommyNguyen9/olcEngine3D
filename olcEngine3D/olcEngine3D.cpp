@@ -459,6 +459,16 @@ private:
 public:
     bool OnUserCreate() override
     {
+        //if (sprTex1 == nullptr)
+        //{
+        //    ofstream debugFile("sprite_error.txt");
+        //    debugFile << "Sprite pointer null\n";
+        //    debugFile << "Current path: " << filesystem::current_path() << "\n";
+        //    debugFile.close();
+
+        //    return false;
+        //}
+
 
         //meshCube.LoadFromObjectFile("VideoShip.obj");
         
@@ -486,8 +496,9 @@ public:
 
             };
 
-            sprTex1 = new olcSprite(L"../ConsoleGame/Jario.spr");
-  
+            sprTex1 = new olcSprite(L"leveljario.spr");
+
+           
             // Projection Matrix
             matProj = Matrix_MakeProjection(90.0f, (float)ScreenHeight() / (float)ScreenWidth(), 0.1f, 1000.0f);
 
@@ -699,6 +710,10 @@ public:
 
             for (auto& t : listTriangles)
             {
+                TexturedTriangle(t.p[0].x, t.p[0].y, t.t[0].u, t.t[0].v,
+                    t.p[1].x, t.p[1].y, t.t[1].u, t.t[1].v,
+                    t.p[2].x, t.p[2].y, t.t[2].u, t.t[2].v, sprTex1);
+
                 //FillTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, t.sym, t.col);
                 DrawTriangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, PIXEL_SOLID, FG_WHITE);
             }
@@ -790,7 +805,52 @@ public:
                 float tstep = 1.0f / ((float)(bx - ax));
                 float t = 0.0f;
 
-                for (int j = ax; j < bx; i++)
+                for (int j = ax; j < bx; j++)
+                {
+                    tex_u = (1.0f - t) * tex_su + t * tex_eu;
+                    tex_v = (1.0f - t) * tex_sv + t * tex_ev;
+                    Draw(j, i, tex->SampleGlyph(tex_u, tex_v), tex->SampleColour(tex_u, tex_v));
+                    t += tstep;
+                }
+            }
+
+            dy1 = y3 - y2;
+            dx1 = x3 - v2;
+            dv1 = v3 - v2;
+            du1 = u3 - u2;
+
+            if (dy1) dax_step = dx1 / (float)abs(dy1);
+            if (dy2) dbx_step = dx2 / (float)abs(dy2);
+
+            du1_step = 0, dv1_step = 0;
+            if (dy1) du1_step = du1 / (float)abs(dy1);
+            if (dy1) dv1_step = dv1 / (float)abs(dy1);
+
+            for (int i = y2; i <= y3; i++)
+            {
+                int ax = x2 + (float)(i - y2) * dax_step;
+                int bx = x1 + (float)(i - y1) * dbx_step;
+
+                float tex_su = u2 + (float)(i - y2) * du1_step;
+                float tex_sv = v2 + (float)(i - y2) * dv1_step;
+
+                float tex_eu = u1 + (float)(i - y1) * du2_step;
+                float tex_ev = v1 + (float)(i - y1) * dv2_step;
+
+                if (ax > bx)
+                {
+                    swap(ax, bx);
+                    swap(tex_su, tex_eu);
+                    swap(tex_sv, tex_ev);
+                }
+
+                tex_u = tex_su;
+                tex_v = tex_sv;
+
+                float tstep = 1.0f / ((float)(bx - ax));
+                float t = 0.0f;
+
+                for (int j = ax; j < bx; j++)
                 {
                     tex_u = (1.0f - t) * tex_su + t * tex_eu;
                     tex_v = (1.0f - t) * tex_sv + t * tex_ev;
@@ -808,7 +868,7 @@ int main()
 {
    
     olcEngine3D demo;
-    if (demo.ConstructConsole(240, 160, 4, 4));
+    if (demo.ConstructConsole(240, 160, 4, 4))
         demo.Start();
   
 
